@@ -19,6 +19,9 @@ from src.enums import PromptKeys
 from src.functions import generate_and_extract_prompts
 from src.graphrag_api import GraphragAPI
 
+# if "multiselect-index-search" in st.session_state:
+#     st.session_state["multiselect-index-search"] = st.session_state["multiselect-index-search"]
+
 
 def get_main_tab(initialized: bool) -> None:
     """
@@ -232,48 +235,92 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
     """
     Displays content of Query Tab
     """
-    gquery = GraphQuery(client)
-    col1, col2 = st.columns(2)
-    with col1:
-        query_type = st.selectbox(
-            "Query Type",
-            ["Global Streaming", "Global", "Local"],
-            help="Select the query type - Each yeilds different results of specificity. Global queries focus on the entire graph structure. Local queries focus on a set of communities (subgraphs) in the graph that are more connected to each other than they are to the rest of the graph structure and can focus on very specific entities in the graph. Global streaming is a global query that displays results as they appear live.",
-        )
-    with col2:
-        search_indexes = client.get_index_names()
-        if not any(search_indexes):
-            st.warning("No indexes found. Please build an index to continue.")
+    with st.form("query-form"):
+        gquery = GraphQuery(client)
+        col1, col2 = st.columns(2)
+        with col1:
+            query_type = st.selectbox(
+                "Query Type",
+                ["Global Streaming", "Global", "Local"],
+                help="Select the query type - Each yields different results of specificity. Global queries focus on the entire graph structure. Local queries focus on a set of communities (subgraphs) in the graph that are more connected to each other than they are to the rest of the graph structure and can focus on very specific entities in the graph. Global streaming is a global query that displays results as they appear live.",
+            )
+        with col2:
+            search_indexes = client.get_index_names()
+            if not any(search_indexes):
+                st.warning("No indexes found. Please build an index to continue.")
 
-        # filter indexes to only those that are complete and allowed
-        filtered_indexes = [index for index in search_indexes if index in allowed_index]
+            # filter indexes to only those that are complete and allowed
+            filtered_indexes = [
+                index for index in search_indexes if index in allowed_index
+            ]
 
-        select_index_search = st.multiselect(
-            label="Index",
-            options=filtered_indexes if any(filtered_indexes) else [],
-            key="multiselect-index-search",
-            help="Select the index(es) to query. The selected index(es) must have a complete status in order to yield query results without error. Use Check Index Status to confirm status.",
-        )
+            select_index_search = st.multiselect(
+                label="Index",
+                options=filtered_indexes if any(filtered_indexes) else [],
+                key="multiselect-index-search",
+                help="Select the index(es) to query. The selected index(es) must have a complete status in order to yield query results without error. Use Check Index Status to confirm status.",
+            )
 
-    disabled = True if not any(select_index_search) else False
-    col3, col4 = st.columns([0.8, 0.2])
+        # disabled = True if not any(select_index_search) else False
+        disabled = False
+        col3, col4 = st.columns([0.8, 0.2], vertical_alignment="bottom")
 
-    with col3:
-        search_bar = st.text_input("Query", key="search-query", disabled=disabled)
-    with col4:
-        search_button = st.button("QUERY", type="primary", disabled=disabled)
+        with col3:
+            with st.container():
+                search_bar = st.text_input(
+                    "Your Query", key="search-query", disabled=disabled
+                )
+                search_button = st.form_submit_button(
+                    "QUERY", type="primary", use_container_width=True, disabled=disabled
+                )
+        with col4:
+            suggest_query = st.form_submit_button(
+                "Give me some ideas on what to ask",
+                use_container_width=True,
+                disabled=disabled,
+            )
 
-    # defining a query variable enables the use of either the search bar or the search button to trigger the query
-    query = st.session_state["search-query"]
-    if len(query) > 5:
-        if (search_bar and search_button) and any(select_index_search):
+        # defining a query variable enables the use of either the search bar or the search button to trigger the query
+        query = st.session_state["search-query"]
+
+        if suggest_query and any(select_index_search):
             execute_query(
                 query_engine=gquery,
                 query_type=query_type,
                 search_index=select_index_search,
-                query=query,
+                query="Suggest me 5 queries that are relevant to your Knowledgebase.",
             )
-    else:
-        col1, col2 = st.columns([0.3, 0.7])
-        with col1:
-            st.warning("Cannot submit queries less than 6 characters in length.")
+        elif len(query) > 5:
+            if (search_bar and search_button) and any(select_index_search):
+                st.session_state["query-context"] = f"User: {query}"
+
+                st.write(f"#You asked: \n**{query}**")
+
+                execute_query(
+                    query_engine=gquery,
+                    query_type=query_type,
+                    search_index=select_index_search,
+                    query=query,
+                )
+
+        else:
+            col1, col2 = st.columns([0.3, 0.7])
+            with col1:
+                if not any(select_index_search):
+                    st.warning("Please select an index!")
+                else:
+                    st.warning(
+                        "Cannot submit queries less than 6 characters in length."
+                    )
+
+    if (
+        "query_context" in st.session_state
+        and len(st.session_state["query_context"]) > 0
+    ):
+        with gquery._create_section_expander("Query History"):
+            st.write(
+                gquery.format_md_text(
+                    "Double-click on content to expand text", "red", False
+                )
+            )
+            gquery._build_st_dataframe(st.session_state["query_context"])

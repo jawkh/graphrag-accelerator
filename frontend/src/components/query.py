@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import json
+from pprint import pformat
 from typing import Literal
 
 import numpy as np
@@ -103,6 +104,23 @@ class GraphQuery:
                 )
                 return
             else:
+                self._save_query_context(
+                    {
+                        "role": "user",
+                        "content": query,
+                        "query-type": "global",
+                        "rag-indexes": search_index,
+                    }
+                )  # save query context
+                self._save_query_context(
+                    {
+                        "role": "assistant",
+                        "content": assistant_response,
+                        "query-type": "global",
+                        "rag-indexes": search_index,
+                        "context": pformat(context_list),
+                    }
+                )  # save query context
                 with self._create_section_expander("Query Context"):
                     st.write(
                         self.format_md_text(
@@ -119,6 +137,23 @@ class GraphQuery:
             index_name=search_index, query_type="Global", query=query
         )
         if query_response["result"] != "":
+            self._save_query_context(
+                {
+                    "role": "user",
+                    "content": query,
+                    "query-type": "global",
+                    "rag-indexes": search_index,
+                }
+            )  # save query context
+            self._save_query_context(
+                {
+                    "role": "assistant",
+                    "content": query_response["result"],
+                    "query-type": "local",
+                    "rag-indexes": search_index,
+                    "context": pformat(query_response["context_data"]["reports"]),
+                }
+            )  # save query context
             with self._create_section_expander("Query Response", "black", True, True):
                 st.write(query_response["result"])
             with self._create_section_expander("Query Context"):
@@ -135,6 +170,15 @@ class GraphQuery:
         )
         results = query_response["result"]
         if results != "":
+            self._save_query_context(
+                {
+                    "role": "user",
+                    "content": query,
+                    "query-type": "local",
+                    "rag-indexes": search_index,
+                }
+            )  # save query context
+
             with self._create_section_expander("Query Response", "black", True, True):
                 st.write(results)
 
@@ -143,6 +187,17 @@ class GraphQuery:
         entities = context_data["entities"]
         relationships = context_data["relationships"]
         # sources = context_data["sources"]
+        self._save_query_context(
+            {
+                "role": "assistant",
+                "content": results,
+                "query-type": "local",
+                "rag-indexes": search_index,
+                "reports": pformat(reports),
+                "entities": pformat(entities),
+                "relationship": pformat(relationships),
+            }
+        )  # save query context
 
         if any(reports):
             with self._create_section_expander("Query Context"):
@@ -158,7 +213,6 @@ class GraphQuery:
                 with self._create_section_expander("Context Entities"):
                     df_entities = pd.DataFrame(entities)
                     self._build_st_dataframe(df_entities, entity_df=True)
-
                 # TODO: Fix the next portion of code to provide a more granular entity view
                 # for report in entities:
                 #     entity_response = get_source_entity(
@@ -181,7 +235,6 @@ class GraphQuery:
                 with self._create_section_expander("Context Relationships"):
                     df_relationships = pd.DataFrame(relationships)
                     self._build_st_dataframe(df_relationships, rel_df=True)
-
                     # TODO: Fix the next portion of code to provide a more granular relationship view
                     # for report in query_response["context_data"][
                     #     "relationships"
@@ -209,6 +262,14 @@ class GraphQuery:
                     #             st.dataframe(
                     #                 df_textinfo_rel, use_container_width=True
                     #             )
+
+    def _save_query_context(self, new_message: dict) -> None:
+        """
+        new_message: {"role": "assistant" | "user", "content": str}
+        """
+        if "query_context" not in st.session_state:
+            st.session_state["query_context"] = []
+        st.session_state["query_context"].append(new_message)
 
     def _build_st_dataframe(
         self,
