@@ -121,14 +121,14 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '10.0.0.0/8'
+        '172.16.0.0/12'
       ]
     }
     subnets: [
       {
         name: '${abbrs.networkVirtualNetworksSubnets}apim'
         properties: {
-          addressPrefix: '10.0.0.0/16'
+          addressPrefix: '172.16.0.0/16'
           networkSecurityGroup: {
             id: nsg.outputs.id
           }
@@ -145,7 +145,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
       {
         name: '${abbrs.networkVirtualNetworksSubnets}aks'
         properties: {
-          addressPrefix: '10.1.0.0/16'
+          addressPrefix: '172.17.0.0/16'
           serviceEndpoints: [
             {
               service: 'Microsoft.Storage'

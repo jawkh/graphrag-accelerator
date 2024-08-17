@@ -22,10 +22,10 @@ def initialize_app(env_file: str = ".env", css_file: str = "style.css") -> bool:
     Initialize the Streamlit app with the necessary configurations.
     """
     # set page configuration
-    st.set_page_config(initial_sidebar_state="expanded", layout="wide")
+    # st.set_page_config(initial_sidebar_state="expanded", layout="wide")
 
     # set custom CSS
-    with open(css_file) as f:
+    with open(f"{os.path.dirname(__file__)}/../{css_file}") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
     # initialize session state variables

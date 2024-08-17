@@ -1,0 +1,15 @@
+{
+  "configurations": [
+    {
+      "args": [
+        "run",
+        "auth.py"
+      ],
+      "name": "debug streamlit",
+      "program": "/graphrag-accelerator/.venv/bin/streamlit",
+      "request": "launch",
+      "type": "python"
+    }
+  ],
+  "version": "0.1.0"
+}

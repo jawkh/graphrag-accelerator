@@ -228,7 +228,7 @@ def execute_query(
         return st.warning("Please enter a query to search.")
 
 
-def get_query_tab(client: GraphragAPI) -> None:
+def get_query_tab(client: GraphragAPI, allowed_index) -> None:
     """
     Displays content of Query Tab
     """
@@ -244,9 +244,13 @@ def get_query_tab(client: GraphragAPI) -> None:
         search_indexes = client.get_index_names()
         if not any(search_indexes):
             st.warning("No indexes found. Please build an index to continue.")
+
+        # filter indexes to only those that are complete and allowed
+        filtered_indexes = [index for index in search_indexes if index in allowed_index]
+
         select_index_search = st.multiselect(
             label="Index",
-            options=search_indexes if any(search_indexes) else [],
+            options=filtered_indexes if any(filtered_indexes) else [],
             key="multiselect-index-search",
             help="Select the index(es) to query. The selected index(es) must have a complete status in order to yield query results without error. Use Check Index Status to confirm status.",
         )

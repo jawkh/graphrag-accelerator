@@ -122,8 +122,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       }
     }
     networkProfile: {
-      serviceCidr: '10.2.0.0/16'
-      dnsServiceIP: '10.2.0.10'
+      serviceCidr: '172.18.0.0/16'
+      dnsServiceIP: '172.18.0.10'
     }
     autoUpgradeProfile: autoUpgradeProfile
     oidcIssuerProfile: {

@@ -17,7 +17,7 @@ st.session_state["initialized"] = True if initialized else False
 
 def graphrag_app(initialized: bool):
     # main entry point for app interface
-    st.title("Microsoft GraphRAG Copilot")
+    # st.title("MOH AIM - GraphRAG Copilot")
     main_tab, prompt_gen_tab, prompt_edit_tab, index_tab, query_tab = st.tabs(
         [
             "**Intro**",
@@ -41,13 +41,25 @@ def graphrag_app(initialized: bool):
 
         # display tabs
         with prompt_gen_tab:
-            tabs.get_prompt_generation_tab(client, COLUMN_WIDTHS)
+            if "AllowCreateIndex" in st.session_state["permissions"]:
+                tabs.get_prompt_generation_tab(client, COLUMN_WIDTHS)
+            else:
+                st.info("You do not have permission to access this tab.")
         with prompt_edit_tab:
-            tabs.get_prompt_configuration_tab()
+            if "AllowCreateIndex" in st.session_state["permissions"]:
+                tabs.get_prompt_configuration_tab()
+            else:
+                st.info("You do not have permission to access this tab.")
         with index_tab:
-            tabs.get_index_tab(indexPipe)
+            if "AllowCreateIndex" in st.session_state["permissions"]:
+                tabs.get_index_tab(indexPipe)
+            else:
+                st.info("You do not have permission to access this tab.")
         with query_tab:
-            tabs.get_query_tab(client)
+            if "AllowQuery" in st.session_state["permissions"]:
+                tabs.get_query_tab(client, st.session_state["graphragindexes"])
+            else:
+                st.info("You do not have permission to access this tab.")
 
     deployer_email = os.getenv("DEPLOYER_EMAIL", "deployer@email.com")
 
@@ -59,5 +71,5 @@ def graphrag_app(initialized: bool):
     st.markdown(footer, unsafe_allow_html=True)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" or __name__ == "__page__":
     graphrag_app(st.session_state["initialized"])
