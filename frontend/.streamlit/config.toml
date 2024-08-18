@@ -3,3 +3,7 @@
 
 [server]
 enableXsrfProtection = false
+runOnSave = true
+
+[client]
+toolbarMode = "viewer"

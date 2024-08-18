@@ -284,17 +284,27 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
         query = st.session_state["search-query"]
 
         if suggest_query and any(select_index_search):
+            # 'Suggest Query' Mode
+            search_mode = "Local" if query_type == "Local" else "Global"
+            prompt = f"""
+                    Suggest 10 relevant questions about your knowledgebase.
+                    Instructions:
+                    - Recap the strengths of GraphRAG {search_mode} Search, particularly how it addresses the limitations of baseline RAG models.
+                    - Do not provide an explanation of GraphRAG itself
+                    - Ensure that the questions are varied and relevant
+                    - Focus on generating a list of sample questions that are relevant to your knowledgebase that cannot be served by `baseline rag` but are suitable for `GraphRAG {search_mode} Search`.
+                    """
             execute_query(
                 query_engine=gquery,
                 query_type=query_type,
                 search_index=select_index_search,
-                query="Suggest me 5 queries that are relevant to your Knowledgebase.",
+                query=prompt,
             )
         elif len(query) > 5:
             if (search_bar and search_button) and any(select_index_search):
                 st.session_state["query-context"] = f"User: {query}"
 
-                st.write(f"#You asked: \n**{query}**")
+                st.write(f"You asked: \n**{query}**")
 
                 execute_query(
                     query_engine=gquery,

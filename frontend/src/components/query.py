@@ -104,10 +104,18 @@ class GraphQuery:
                 )
                 return
             else:
+                user_query = (
+                    query
+                    if query.find(
+                        "Suggest 10 relevant questions about your knowledgebase."
+                    )
+                    < 0
+                    else "Give me some ideas on what to ask"
+                )
                 self._save_query_context(
                     {
                         "role": "user",
-                        "content": query,
+                        "content": user_query,
                         "query-type": "global",
                         "rag-indexes": search_index,
                     }
@@ -137,10 +145,17 @@ class GraphQuery:
             index_name=search_index, query_type="Global", query=query
         )
         if query_response["result"] != "":
+            user_query = (
+                query
+                if query.find("Suggest 10 relevant questions about your knowledgebase.")
+                < 0
+                else "Give me some ideas on what to ask"
+            )
+
             self._save_query_context(
                 {
                     "role": "user",
-                    "content": query,
+                    "content": user_query,
                     "query-type": "global",
                     "rag-indexes": search_index,
                 }
@@ -170,10 +185,17 @@ class GraphQuery:
         )
         results = query_response["result"]
         if results != "":
+            user_query = (
+                query
+                if query.find("Suggest 10 relevant questions about your knowledgebase.")
+                < 0
+                else "Give me some ideas on what to ask"
+            )
+
             self._save_query_context(
                 {
                     "role": "user",
-                    "content": query,
+                    "content": user_query,
                     "query-type": "local",
                     "rag-indexes": search_index,
                 }

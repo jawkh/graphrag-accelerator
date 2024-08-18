@@ -22,37 +22,39 @@ from src.auth.security import (
 
 # Login UI
 def login():
-    with st.form("login_form"):
-        st.title("User Login")
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        with st.form("login_form"):
+            st.title("User Login")
 
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
 
-        if st.form_submit_button("Login"):
-            # Init Mode only (To be removed once the CosmoDB is properly initialized with at least 1 Administrator)
-            # if (username == "sa" ):
-            #     st.success("Login successful")
-            #     reset_failed_attempts(username)
-            #     st.session_state["username"] = "sa"
-            #     st.session_state["permissions"] = "Administrator"
-            #     st.experimental_rerun() # Login Success! Halt and reload webpage with new user session!
-            user = get_user(username)
-            if not user or is_account_locked(username):
-                st.error("Account locked or invalid credentials")
-                return
+            if st.form_submit_button("Login"):
+                # Init Mode only (To be removed once the CosmoDB is properly initialized with at least 1 Administrator)
+                # if (username == "sa" ):
+                #     st.success("Login successful")
+                #     reset_failed_attempts(username)
+                #     st.session_state["username"] = "sa"
+                #     st.session_state["permissions"] = "Administrator"
+                #     st.experimental_rerun() # Login Success! Halt and reload webpage with new user session!
+                user = get_user(username)
+                if not user or is_account_locked(username):
+                    st.error("Account locked or invalid credentials")
+                    return
 
-            if verify_password(user.hashpassword, password):
-                st.success("Login successful")
-                reset_failed_attempts(username)
-                st.session_state["username"] = username
-                st.session_state["permissions"] = user.permissions
-                st.session_state["graphragindexes"] = user.graphragindexes
-                st.experimental_rerun()  # Login Success! Halt and reload webpage with new user session!
-            else:
-                record_failed_attempt(username)
-                st.error(
-                    f"Invalid credentials. {LOCKOUT_THRESHOLD - login_attempts.get(username, {'count': 0})['count']} attempts left."
-                )
+                if verify_password(user.hashpassword, password):
+                    st.success("Login successful")
+                    reset_failed_attempts(username)
+                    st.session_state["username"] = username
+                    st.session_state["permissions"] = user.permissions
+                    st.session_state["graphragindexes"] = user.graphragindexes
+                    st.experimental_rerun()  # Login Success! Halt and reload webpage with new user session!
+                else:
+                    record_failed_attempt(username)
+                    st.error(
+                        f"Invalid credentials. {LOCKOUT_THRESHOLD - login_attempts.get(username, {'count': 0})['count']} attempts left."
+                    )
 
 
 # Logged Out Message
@@ -87,16 +89,20 @@ def change_password():
         st.error("You must be logged in to change your password.")
         return
 
-    with st.form("change_password_form"):
-        st.title("Change My Password")
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        with st.form("change_password_form"):
+            st.title("Change My Password")
 
-        st.text_input("Current Password", type="password", key="current_password")
-        st.text_input("New Password", type="password", key="new_password")
-        st.text_input("Confirm New Password", type="password", key="confirm_password")
+            st.text_input("Current Password", type="password", key="current_password")
+            st.text_input("New Password", type="password", key="new_password")
+            st.text_input(
+                "Confirm New Password", type="password", key="confirm_password"
+            )
 
-        if st.form_submit_button("Change Password", on_click=cb_change_password):
-            # let the callback handle the rest
-            pass
+            if st.form_submit_button("Change Password", on_click=cb_change_password):
+                # let the callback handle the rest
+                pass
 
 
 def show_user_details():
@@ -161,116 +167,132 @@ def cb_unlock_account(user):
 def admin_interface():
     check_permission("Administrator")  # assert permission
 
-    st.title("User Administration")
-    action = st.selectbox(
-        "Select Action",
-        ["Create User", "Edit User", "Unlock Account", "Reset Password", "Delete User"],
-    )
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        st.title("User Administration")
+        action = st.selectbox(
+            "Select Action",
+            [
+                "Create User",
+                "Edit User",
+                "Unlock Account",
+                "Reset Password",
+                "Delete User",
+            ],
+        )
 
-    users = list_users()
-    user_options = [user["username"] for user in users]
-    graphrag_indexes = list_graphrag_indexes()  # Get available indexes
+        users = list_users()
+        user_options = [user["username"] for user in users]
+        graphrag_indexes = list_graphrag_indexes()  # Get available indexes
 
-    if action == "Create User":
-        with st.form("create_user_form"):
-            st.text_input("Username", key="create_user_username")
-            st.text_input(
-                "Default Password", type="password", key="create_user_password"
-            )
-            permissions = st.multiselect(
-                "Permissions",
-                ["Administrator", "AllowCreateIndex", "AllowQuery"],
-                key="create_user_permissions",
-            )
-            selected_indexes = st.multiselect(
-                "GraphRAG Indexes", graphrag_indexes, key="create_user_graphragindexes"
-            )
-
-            if st.form_submit_button("Create User", on_click=cb_CreateUser):
-                # Let Callback handle the rest
-                pass
-
-    elif action == "Edit User":
-        selected_username = st.selectbox("Select User to Edit", user_options)
-        user = get_user(selected_username)
-
-        if user:
-            with st.form("edit_user_form"):
+        if action == "Create User":
+            with st.form("create_user_form"):
+                st.text_input("Username", key="create_user_username")
+                st.text_input(
+                    "Default Password", type="password", key="create_user_password"
+                )
                 permissions = st.multiselect(
                     "Permissions",
                     ["Administrator", "AllowCreateIndex", "AllowQuery"],
-                    default=user.permissions,
+                    key="create_user_permissions",
                 )
                 selected_indexes = st.multiselect(
-                    "GraphRAG Indexes", graphrag_indexes, default=user.graphragindexes
+                    "GraphRAG Indexes",
+                    graphrag_indexes,
+                    key="create_user_graphragindexes",
                 )
 
-                if st.form_submit_button("Update User"):
-                    user.permissions = permissions
-                    user.graphragindexes = selected_indexes
-                    save_user(user)
-                    st.success(f"User {selected_username} updated successfully")
-
-        else:
-            st.error("User not found")
-
-    elif action == "Unlock Account":
-        selected_username = st.selectbox("Select User to Unlock", user_options)
-        user = get_user(selected_username)
-
-        if user:
-            f"Status: {user.accountstatus}"
-            if user.accountstatus == "Active":
-                st.info("Account is already active!")
-            elif st.button("Unlock Account", on_click=cb_unlock_account, args=[user]):
-                # Let Callback handle the rest
-                pass
-        else:
-            st.error("User not found")
-
-    elif action == "Reset Password":
-        selected_username = st.selectbox("Select User to Reset Password", user_options)
-        user = get_user(selected_username)
-
-        if user:
-            with st.form("reset_password_form"):
-                new_password = st.text_input(
-                    "New Password", type="password", key="reset_password"
-                )
-                confirm_password = st.text_input(
-                    "Confirm New Password",
-                    type="password",
-                    key="confirm_reset_password",
-                )
-
-                if new_password != confirm_password:
-                    st.error("Passwords do not match")
-                else:
-                    if st.form_submit_button(
-                        "Reset Password", on_click=cb_ResetPassword, args=[user]
-                    ):
-                        # Let Callback handle the rest
-                        pass
-        else:
-            st.error("User not found")
-
-    elif action == "Delete User":
-        selected_username = st.selectbox(
-            "Select User to Delete", user_options, key="delete_user_username"
-        )
-        user = get_user(selected_username)
-
-        if user:
-            # Prevent the administrator from deleting their own account
-            if selected_username == st.session_state["username"]:
-                st.warning("You cannot delete your own account.")
-            else:
-                st.checkbox("Confirm delete user?", key="confirm_delete")
-                if st.button("Delete User", on_click=cb_DeleteUser):
+                if st.form_submit_button("Create User", on_click=cb_CreateUser):
                     # Let Callback handle the rest
                     pass
-        else:
-            st.error("User not found")
+
+        elif action == "Edit User":
+            selected_username = st.selectbox("Select User to Edit", user_options)
+            user = get_user(selected_username)
+
+            if user:
+                with st.form("edit_user_form"):
+                    permissions = st.multiselect(
+                        "Permissions",
+                        ["Administrator", "AllowCreateIndex", "AllowQuery"],
+                        default=user.permissions,
+                    )
+                    selected_indexes = st.multiselect(
+                        "GraphRAG Indexes",
+                        graphrag_indexes,
+                        default=user.graphragindexes,
+                    )
+
+                    if st.form_submit_button("Update User"):
+                        user.permissions = permissions
+                        user.graphragindexes = selected_indexes
+                        save_user(user)
+                        st.success(f"User {selected_username} updated successfully")
+
+            else:
+                st.error("User not found")
+
+        elif action == "Unlock Account":
+            selected_username = st.selectbox("Select User to Unlock", user_options)
+            user = get_user(selected_username)
+
+            if user:
+                f"Status: {user.accountstatus}"
+                if user.accountstatus == "Active":
+                    st.info("Account is already active!")
+                elif st.button(
+                    "Unlock Account", on_click=cb_unlock_account, args=[user]
+                ):
+                    # Let Callback handle the rest
+                    pass
+            else:
+                st.error("User not found")
+
+        elif action == "Reset Password":
+            selected_username = st.selectbox(
+                "Select User to Reset Password", user_options
+            )
+            user = get_user(selected_username)
+
+            if user:
+                with st.form("reset_password_form"):
+                    new_password = st.text_input(
+                        "New Password", type="password", key="reset_password"
+                    )
+                    confirm_password = st.text_input(
+                        "Confirm New Password",
+                        type="password",
+                        key="confirm_reset_password",
+                    )
+
+                    if new_password != confirm_password:
+                        st.error("Passwords do not match")
+                    else:
+                        if st.form_submit_button(
+                            "Reset Password", on_click=cb_ResetPassword, args=[user]
+                        ):
+                            # Let Callback handle the rest
+                            pass
+            else:
+                st.error("User not found")
+
+        elif action == "Delete User":
+            selected_username = st.selectbox(
+                "Select User to Delete", user_options, key="delete_user_username"
+            )
+            user = get_user(selected_username)
+
+            if user:
+                # Prevent the administrator from deleting their own account
+                if selected_username == st.session_state["username"]:
+                    st.warning("You cannot delete your own account.")
+                else:
+                    st.checkbox("Confirm delete user?", key="confirm_delete")
+                    if st.button("Delete User", on_click=cb_DeleteUser):
+                        # Let Callback handle the rest
+                        pass
+            else:
+                st.error("User not found")
 
 
 def check_permission(required_permission):
@@ -283,6 +305,7 @@ def check_permission(required_permission):
 
 
 if __name__ == "__main__":
+    st.set_page_config(layout="wide")
     st.title("MOH AIM - GraphRAG Copilot")
     loginPage = st.Page(login, title="User Login")
     UsersAdminPage = st.Page(admin_interface, title="Users Administration")
