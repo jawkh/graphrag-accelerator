@@ -19,16 +19,13 @@ from src.enums import PromptKeys
 from src.functions import generate_and_extract_prompts
 from src.graphrag_api import GraphragAPI
 
-# if "multiselect-index-search" in st.session_state:
-#     st.session_state["multiselect-index-search"] = st.session_state["multiselect-index-search"]
-
 
 def get_main_tab(initialized: bool) -> None:
     """
     Displays content of Main Tab
     """
 
-    url = "https://github.com/Azure-Samples/graphrag-accelerator/blob/main/TRANSPARENCY.md"
+    url = "https://www.microsoft.com/en-us/research/blog/graphrag-unlocking-llm-discovery-on-narrative-private-data/"
     content = f"""
     ##  Welcome to GraphRAG!
     Diving into complex information and uncovering semantic relationships utilizing generative AI has never been easier.
@@ -242,6 +239,7 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
             query_type = st.selectbox(
                 "Query Type",
                 ["Global Streaming", "Global", "Local"],
+                key="select-query-type",
                 help="Select the query type - Each yields different results of specificity. Global queries focus on the entire graph structure. Local queries focus on a set of communities (subgraphs) in the graph that are more connected to each other than they are to the rest of the graph structure and can focus on very specific entities in the graph. Global streaming is a global query that displays results as they appear live.",
             )
         with col2:
@@ -261,23 +259,17 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
                 help="Select the index(es) to query. The selected index(es) must have a complete status in order to yield query results without error. Use Check Index Status to confirm status.",
             )
 
-        # disabled = True if not any(select_index_search) else False
-        disabled = False
         col3, col4 = st.columns([0.8, 0.2], vertical_alignment="bottom")
 
         with col3:
             with st.container():
-                search_bar = st.text_input(
-                    "Your Query", key="search-query", disabled=disabled
-                )
+                search_bar = st.text_input("Your Query", key="search-query")
                 search_button = st.form_submit_button(
-                    "QUERY", type="primary", use_container_width=True, disabled=disabled
+                    "QUERY", type="primary", use_container_width=True
                 )
         with col4:
             suggest_query = st.form_submit_button(
-                "Give me some ideas on what to ask",
-                use_container_width=True,
-                disabled=disabled,
+                "Give me some ideas on what to ask", use_container_width=True
             )
 
         # defining a query variable enables the use of either the search bar or the search button to trigger the query

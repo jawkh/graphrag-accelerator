@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import json
+from datetime import datetime
 from pprint import pformat
 from typing import Literal
 
@@ -71,6 +72,8 @@ class GraphQuery:
         assistant_response = ""
         context_list = []
 
+        user_query_time = datetime.now()
+
         if query_response.status_code == 200:
             text_placeholder = st.empty()
             for chunk in query_response.iter_lines(
@@ -114,6 +117,7 @@ class GraphQuery:
                 )
                 self._save_query_context(
                     {
+                        "datetime": user_query_time.strftime("%d-%b-%Y %H:%M:%S"),
                         "role": "user",
                         "content": user_query,
                         "query-type": "global",
@@ -122,6 +126,7 @@ class GraphQuery:
                 )  # save query context
                 self._save_query_context(
                     {
+                        "datetime": datetime.now().strftime("%d-%b-%Y %H:%M:%S"),
                         "role": "assistant",
                         "content": assistant_response,
                         "query-type": "global",
@@ -141,6 +146,7 @@ class GraphQuery:
             raise Exception("Received unexpected response from server")
 
     def global_search(self, search_index: str | list[str], query: str) -> None:
+        user_query_time = datetime.now()
         query_response = self.client.query_index(
             index_name=search_index, query_type="Global", query=query
         )
@@ -154,6 +160,7 @@ class GraphQuery:
 
             self._save_query_context(
                 {
+                    "datetime": user_query_time.strftime("%d-%b-%Y %H:%M:%S"),
                     "role": "user",
                     "content": user_query,
                     "query-type": "global",
@@ -162,9 +169,10 @@ class GraphQuery:
             )  # save query context
             self._save_query_context(
                 {
+                    "datetime": datetime.now().strftime("%d-%b-%Y %H:%M:%S"),
                     "role": "assistant",
                     "content": query_response["result"],
-                    "query-type": "local",
+                    "query-type": "global",
                     "rag-indexes": search_index,
                     "context": pformat(query_response["context_data"]["reports"]),
                 }
@@ -180,6 +188,7 @@ class GraphQuery:
                 self._build_st_dataframe(query_response["context_data"]["reports"])
 
     def local_search(self, search_index: str | list[str], query: str) -> None:
+        user_query_time = datetime.now()
         query_response = self.client.query_index(
             index_name=search_index, query_type="Local", query=query
         )
@@ -194,6 +203,7 @@ class GraphQuery:
 
             self._save_query_context(
                 {
+                    "datetime": user_query_time.strftime("%d-%b-%Y %H:%M:%S"),
                     "role": "user",
                     "content": user_query,
                     "query-type": "local",
@@ -211,6 +221,7 @@ class GraphQuery:
         # sources = context_data["sources"]
         self._save_query_context(
             {
+                "datetime": datetime.now().strftime("%d-%b-%Y %H:%M:%S"),
                 "role": "assistant",
                 "content": results,
                 "query-type": "local",

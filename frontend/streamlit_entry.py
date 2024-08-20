@@ -49,7 +49,7 @@ def login():
                     st.session_state["username"] = username
                     st.session_state["permissions"] = user.permissions
                     st.session_state["graphragindexes"] = user.graphragindexes
-                    st.experimental_rerun()  # Login Success! Halt and reload webpage with new user session!
+                    st.rerun()  # Login Success! Halt and reload webpage with new user session!
                 else:
                     record_failed_attempt(username)
                     st.error(
@@ -306,7 +306,7 @@ def check_permission(required_permission):
 
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
-    st.title("MOH AIM - GraphRAG Copilot")
+    st.title("MOH ACE - GraphRAG Copilot")
     loginPage = st.Page(login, title="User Login")
     UsersAdminPage = st.Page(admin_interface, title="Users Administration")
     mainPage = st.Page("app.py", title="MOH ACE GraphRAG Copilot")
