@@ -7,6 +7,12 @@ ENV PIP_ROOT_USER_ACTION=ignore
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 
+# Install tzdata and set timezone to Asia/Singapore
+RUN apt-get update && apt-get install -y tzdata && \
+    ln -snf /usr/share/zoneinfo/Asia/Singapore /etc/localtime && \
+    echo "Asia/Singapore" > /etc/timezone && \
+    dpkg-reconfigure -f noninteractive tzdata
+
 COPY poetry.lock pyproject.toml /
 COPY frontend /frontend
 RUN pip install poetry \
