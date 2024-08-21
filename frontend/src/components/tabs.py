@@ -395,31 +395,15 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
         with gquery._create_section_expander(
             "Scratch Pad - Supports Markdown Formatting"
         ):
-            col1, col2 = st.columns([5, 1], vertical_alignment="bottom")
-            with col1:
-                st.write(
-                    "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
-                )
-                # Text area for user to paste the clipboard content
-                clipboard_text = st.text_area(
-                    ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
-                    height=200,
-                    key="clipboard_text",
-                )
-            with col2:
-                renderMarkdown = st.button("Render as Markdown", key="render_markdown")
-                renderDataframe = st.button(
-                    "Render in Dataframe", key="render_dataframe"
-                )
-                clearScratchPad = st.button(
-                    "Clear Scratch Pad", key="clear_scratch_pad"
-                )
+            st.write(
+                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+            )
+            # Text area for user to paste the clipboard content
+            clipboard_text = st.text_area(
+                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+                height=200,
+                key="clipboard_text",
+            )
 
-            # Render the clipboard text as Markdown if it's not empty
-            if clipboard_text and renderMarkdown:
-                st.write("### Rendered Markdown:")
-                st.markdown(clipboard_text)
-            elif clipboard_text and renderDataframe:
-                st.dataframe(clipboard_text, key="clipboard_text_df")
-            elif clipboard_text and clearScratchPad:
-                st.session_state["clipboard_text"] = ""
+            if clipboard_text:
+                display_markdown_text(clipboard_text)
