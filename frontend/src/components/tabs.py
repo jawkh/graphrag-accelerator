@@ -67,7 +67,7 @@ def get_query_history_tab() -> None:
         ):
             df = pd.DataFrame(session_data)
             st.dataframe(df)
-        with st.expander(":blue[**Scratch Pad - Supports Markdown Formatting**]"):
+        with st.expander(":blue[**Scratch Pad No.1 - Supports Markdown Formatting**]"):
             st.write(
                 "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
             )
@@ -80,6 +80,19 @@ def get_query_history_tab() -> None:
 
             if history_clipboard_text:
                 display_markdown_text(history_clipboard_text)
+        with st.expander(":blue[**Scratch Pad No.2- Supports Markdown Formatting**]"):
+            st.write(
+                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+            )
+            # Text area for user to paste the clipboard content
+            history_clipboard_text_02 = st.text_area(
+                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+                height=200,
+                key="history_clipboard_text_02",
+            )
+
+            if history_clipboard_text_02:
+                display_markdown_text(history_clipboard_text_02)
 
 
 def get_main_tab(initialized: bool) -> None:
@@ -393,7 +406,7 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
             )
             gquery._build_st_dataframe(st.session_state["query_context"])
         with gquery._create_section_expander(
-            "Scratch Pad - Supports Markdown Formatting"
+            "Scratch Pad No.1 - Supports Markdown Formatting"
         ):
             st.write(
                 "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
@@ -407,3 +420,18 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
 
             if clipboard_text:
                 display_markdown_text(clipboard_text)
+        with gquery._create_section_expander(
+            "Scratch Pad No.2 - Supports Markdown Formatting"
+        ):
+            st.write(
+                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+            )
+            # Text area for user to paste the clipboard content
+            clipboard_text_02 = st.text_area(
+                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+                height=200,
+                key="clipboard_text_02",
+            )
+
+            if clipboard_text_02:
+                display_markdown_text(clipboard_text_02)

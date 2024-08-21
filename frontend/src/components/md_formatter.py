@@ -16,8 +16,14 @@ def display_pythonListDict_as_markdown(listDict):
         if "title" in item:
             st.markdown(f"### {item['title']}")
 
+        if "entity" in item:
+            st.markdown(f"**Entity:** {item['entity']}")
+
         if "rank" in item:
             st.markdown(f"**Rank:** {item['rank']}")
+
+        if "in_context" in item:
+            st.markdown(f"**In Context:** {item['in_context']}")
 
         if "id" in item:
             st.markdown(f"**ID:** {item['id']}")
@@ -28,16 +34,11 @@ def display_pythonListDict_as_markdown(listDict):
         if "index_name" in item:
             st.markdown(f"**Index Name:** {item['index_name']}")
 
-        # Process specific fields in type #1
-        if "entity" in item:
-            st.markdown(f"**Entity:** {item['entity']}")
-
         if "number of relationships" in item:
             st.markdown(
                 f"**Number of Relationships:** {item['number of relationships']}"
             )
 
-        # Process specific fields in type #2
         if "source" in item:
             st.markdown(f"**Source:** {item['source']}")
 
