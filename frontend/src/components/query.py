@@ -1,6 +1,5 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-
 import json
 from datetime import datetime
 from pprint import pformat
@@ -13,12 +12,30 @@ import streamlit as st
 
 from src.graphrag_api import GraphragAPI
 
+from ..auth.db import save_query_histories
+
 
 class GraphQuery:
     KILOBYTE = 1024
 
-    def __init__(self, client: GraphragAPI):
+    def __init__(self, client: GraphragAPI, session_id: str, username: str):
         self.client = client
+        self.session_id = session_id
+        self.username = username
+
+    def _get_blob_filename(self):
+        # Ensure the blob is tagged with the username
+        return f"{self.session_id}_query_histories"
+
+    def _save_query_context(self, new_message: dict) -> None:
+        if "query_context" not in st.session_state:
+            st.session_state["query_context"] = []
+        # Append the new message to the session state
+        st.session_state["query_context"].append(new_message)
+        # Save the query context asynchronously
+        save_query_histories(
+            self._get_blob_filename(), st.session_state["query_context"]
+        )
 
     def search(
         self,
@@ -295,14 +312,6 @@ class GraphQuery:
                     #             st.dataframe(
                     #                 df_textinfo_rel, use_container_width=True
                     #             )
-
-    def _save_query_context(self, new_message: dict) -> None:
-        """
-        new_message: {"role": "assistant" | "user", "content": str}
-        """
-        if "query_context" not in st.session_state:
-            st.session_state["query_context"] = []
-        st.session_state["query_context"].append(new_message)
 
     def _build_st_dataframe(
         self,

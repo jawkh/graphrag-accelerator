@@ -1,5 +1,7 @@
 # Copyright Jonathan AW.
 # Licensed under the MIT License.
+from datetime import datetime
+
 import streamlit as st
 from src.auth.db import (
     delete_user,
@@ -49,6 +51,11 @@ def login():
                     st.session_state["username"] = username
                     st.session_state["permissions"] = user.permissions
                     st.session_state["graphragindexes"] = user.graphragindexes
+                    st.session_state["session_id_prefix"] = f"__{username}__session_"
+                    st.session_state["session_id"] = (
+                        f"{st.session_state.session_id_prefix}{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                    )
+
                     st.rerun()  # Login Success! Halt and reload webpage with new user session!
                 else:
                     record_failed_attempt(username)
