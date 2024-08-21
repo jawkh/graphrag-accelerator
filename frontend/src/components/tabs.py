@@ -1,13 +1,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-
 import os
 from time import sleep
 
+import pandas as pd
 import streamlit as st
 
+from src.auth.db import list_user_session_names_with_prefix, load_query_histories
 from src.components.index_pipeline import IndexPipeline
 from src.components.login_sidebar import login
+from src.components.md_formatter import display_markdown_text
 from src.components.prompt_configuration import (
     edit_prompts,
     prompt_editor,
@@ -18,6 +20,79 @@ from src.components.upload_files_component import upload_files
 from src.enums import PromptKeys
 from src.functions import generate_and_extract_prompts
 from src.graphrag_api import GraphragAPI
+
+
+def get_query_history_tab() -> None:
+    """
+    Displays the chat history for the current user.
+
+    Returns:
+        None
+    """
+    st.title("Past Query Histories")
+
+    if "query_histories" not in st.session_state:
+        # Load the chat histories for the current user
+
+        try:
+            list_user_session_names = list_user_session_names_with_prefix(
+                "query-history", st.session_state.session_id_prefix
+            )
+
+            if not list_user_session_names:
+                st.session_state.query_histories = []
+                st.write("No query histories available.")
+                return
+            else:
+                list_user_session_names.append(
+                    f"{st.session_state.session_id}_query_histories"
+                )  # Append the current session to the list of sessions
+                st.session_state.query_histories = list_user_session_names
+        except Exception as e:
+            st.error(f"Error loading blobs: {str(e)}")
+            return
+
+    if not st.session_state.query_histories:
+        st.write("No query histories available.")
+        return
+
+    selected_session = st.selectbox(
+        "Select a session:", st.session_state.query_histories
+    )  # Append the current session to the list of sessions
+
+    if selected_session:
+        session_data = load_query_histories(selected_session)
+        with st.expander(
+            f":blue[**Query Histories for: {selected_session}**]", expanded=True
+        ):
+            df = pd.DataFrame(session_data)
+            st.dataframe(df)
+        with st.expander(":blue[**Scratch Pad No.1 - Supports Markdown Formatting**]"):
+            st.write(
+                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+            )
+            # Text area for user to paste the clipboard content
+            history_clipboard_text = st.text_area(
+                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+                height=200,
+                key="history_clipboard_text",
+            )
+
+            if history_clipboard_text:
+                display_markdown_text(history_clipboard_text)
+        with st.expander(":blue[**Scratch Pad No.2- Supports Markdown Formatting**]"):
+            st.write(
+                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+            )
+            # Text area for user to paste the clipboard content
+            history_clipboard_text_02 = st.text_area(
+                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+                height=200,
+                key="history_clipboard_text_02",
+            )
+
+            if history_clipboard_text_02:
+                display_markdown_text(history_clipboard_text_02)
 
 
 def get_main_tab(initialized: bool) -> None:
@@ -233,7 +308,9 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
     Displays content of Query Tab
     """
     with st.form("query-form"):
-        gquery = GraphQuery(client)
+        gquery = GraphQuery(
+            client, st.session_state.session_id, st.session_state.username
+        )
         col1, col2 = st.columns(2)
         with col1:
             query_type = st.selectbox(
@@ -319,10 +396,42 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
         "query_context" in st.session_state
         and len(st.session_state["query_context"]) > 0
     ):
-        with gquery._create_section_expander("Query History"):
+        with gquery._create_section_expander(
+            f"Query History: [SESSION_ID: {st.session_state['session_id']}]"
+        ):
             st.write(
                 gquery.format_md_text(
                     "Double-click on content to expand text", "red", False
                 )
             )
             gquery._build_st_dataframe(st.session_state["query_context"])
+        with gquery._create_section_expander(
+            "Scratch Pad No.1 - Supports Markdown Formatting"
+        ):
+            st.write(
+                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+            )
+            # Text area for user to paste the clipboard content
+            clipboard_text = st.text_area(
+                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+                height=200,
+                key="clipboard_text",
+            )
+
+            if clipboard_text:
+                display_markdown_text(clipboard_text)
+        with gquery._create_section_expander(
+            "Scratch Pad No.2 - Supports Markdown Formatting"
+        ):
+            st.write(
+                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+            )
+            # Text area for user to paste the clipboard content
+            clipboard_text_02 = st.text_area(
+                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+                height=200,
+                key="clipboard_text_02",
+            )
+
+            if clipboard_text_02:
+                display_markdown_text(clipboard_text_02)

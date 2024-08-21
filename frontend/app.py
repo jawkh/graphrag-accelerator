@@ -18,13 +18,21 @@ st.session_state["initialized"] = True if initialized else False
 def graphrag_app(initialized: bool):
     # main entry point for app interface
     # st.title("MOH AIM - GraphRAG Copilot")
-    main_tab, prompt_gen_tab, prompt_edit_tab, index_tab, query_tab = st.tabs(
+    (
+        main_tab,
+        prompt_gen_tab,
+        prompt_edit_tab,
+        index_tab,
+        query_tab,
+        query_history_tab,
+    ) = st.tabs(
         [
             "**Intro**",
             "**1. Prompt Generation**",
             "**2. Prompt Configuration**",
             "**3. Index**",
             "**4. Query**",
+            "**5. Query History**",
         ]
     )
     with main_tab:
@@ -58,6 +66,11 @@ def graphrag_app(initialized: bool):
         with query_tab:
             if "AllowQuery" in st.session_state["permissions"]:
                 tabs.get_query_tab(client, st.session_state["graphragindexes"])
+            else:
+                st.info("You do not have permission to access this tab.")
+        with query_history_tab:
+            if "AllowQuery" in st.session_state["permissions"]:
+                tabs.get_query_history_tab()
             else:
                 st.info("You do not have permission to access this tab.")
 
