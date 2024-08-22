@@ -66,33 +66,40 @@ def get_query_history_tab() -> None:
             f":blue[**Query Histories for: {selected_session}**]", expanded=True
         ):
             df = pd.DataFrame(session_data)
-            st.dataframe(df)
-        with st.expander(":blue[**Scratch Pad No.1 - Supports Markdown Formatting**]"):
-            st.write(
-                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
-            )
-            # Text area for user to paste the clipboard content
-            history_clipboard_text = st.text_area(
-                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
-                height=200,
-                key="history_clipboard_text",
+            event_select_query_history_row = st.dataframe(
+                df,
+                key="selected_query_history_row",
+                selection_mode="single-row",
+                on_select="rerun",
             )
 
-            if history_clipboard_text:
-                display_markdown_text(history_clipboard_text)
-        with st.expander(":blue[**Scratch Pad No.2- Supports Markdown Formatting**]"):
-            st.write(
-                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
-            )
-            # Text area for user to paste the clipboard content
-            history_clipboard_text_02 = st.text_area(
-                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
-                height=200,
-                key="history_clipboard_text_02",
-            )
+        if len(event_select_query_history_row.selection.rows) > 0:
+            selectedRow = df.iloc[
+                event_select_query_history_row.selection.rows[0]
+            ].to_dict()
+            if "content" in selectedRow.keys() and not pd.isna(selectedRow["content"]):
+                with st.expander(":blue[**Content**]"):
+                    display_markdown_text(selectedRow["content"])
 
-            if history_clipboard_text_02:
-                display_markdown_text(history_clipboard_text_02)
+            if "context" in selectedRow.keys() and not pd.isna(selectedRow["context"]):
+                with st.expander(":blue[**Context**]"):
+                    display_markdown_text(selectedRow["context"])
+
+            if "reports" in selectedRow.keys() and not pd.isna(selectedRow["reports"]):
+                with st.expander(":blue[**Reports**]"):
+                    display_markdown_text(selectedRow["reports"])
+
+            if "entities" in selectedRow.keys() and not pd.isna(
+                selectedRow["entities"]
+            ):
+                with st.expander(":blue[**Entities**]"):
+                    display_markdown_text(selectedRow["entities"])
+
+            if "relationship" in selectedRow.keys() and not pd.isna(
+                selectedRow["relationship"]
+            ):
+                with st.expander(":blue[**Relationship**]"):
+                    display_markdown_text(selectedRow["relationship"])
 
 
 def get_main_tab(initialized: bool) -> None:
@@ -399,39 +406,73 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
         with gquery._create_section_expander(
             f"Query History: [SESSION_ID: {st.session_state['session_id']}]"
         ):
-            st.write(
-                gquery.format_md_text(
-                    "Double-click on content to expand text", "red", False
-                )
-            )
-            gquery._build_st_dataframe(st.session_state["query_context"])
-        with gquery._create_section_expander(
-            "Scratch Pad No.1 - Supports Markdown Formatting"
-        ):
-            st.write(
-                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
-            )
-            # Text area for user to paste the clipboard content
-            clipboard_text = st.text_area(
-                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
-                height=200,
-                key="clipboard_text",
+            # st.write(
+            #     gquery.format_md_text(
+            #         "Double-click on content to expand text", "red", False
+            #     )
+            # )
+            # gquery._build_st_dataframe(st.session_state["query_context"])
+            df = pd.DataFrame(st.session_state["query_context"])
+            event_select_query_row = st.dataframe(
+                df,
+                key="event_select_query_row",
+                selection_mode="single-row",
+                on_select="rerun",
             )
 
-            if clipboard_text:
-                display_markdown_text(clipboard_text)
-        with gquery._create_section_expander(
-            "Scratch Pad No.2 - Supports Markdown Formatting"
-        ):
-            st.write(
-                "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
-            )
-            # Text area for user to paste the clipboard content
-            clipboard_text_02 = st.text_area(
-                ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
-                height=200,
-                key="clipboard_text_02",
-            )
+        if len(event_select_query_row.selection.rows) > 0:
+            selectedRow = df.iloc[event_select_query_row.selection.rows[0]].to_dict()
+            if "content" in selectedRow.keys() and not pd.isna(selectedRow["content"]):
+                with st.expander(":blue[**Content**]"):
+                    display_markdown_text(selectedRow["content"])
 
-            if clipboard_text_02:
-                display_markdown_text(clipboard_text_02)
+            if "context" in selectedRow.keys() and not pd.isna(selectedRow["context"]):
+                with st.expander(":blue[**Context**]"):
+                    display_markdown_text(selectedRow["context"])
+
+            if "reports" in selectedRow.keys() and not pd.isna(selectedRow["reports"]):
+                with st.expander(":blue[**Reports**]"):
+                    display_markdown_text(selectedRow["reports"])
+
+            if "entities" in selectedRow.keys() and not pd.isna(
+                selectedRow["entities"]
+            ):
+                with st.expander(":blue[**Entities**]"):
+                    display_markdown_text(selectedRow["entities"])
+
+            if "relationship" in selectedRow.keys() and not pd.isna(
+                selectedRow["relationship"]
+            ):
+                with st.expander(":blue[**Relationship**]"):
+                    display_markdown_text(selectedRow["relationship"])
+
+        # with gquery._create_section_expander(
+        #     "Scratch Pad No.1 - Supports Markdown Formatting"
+        # ):
+        #     st.write(
+        #         "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+        #     )
+        #     # Text area for user to paste the clipboard content
+        #     clipboard_text = st.text_area(
+        #         ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+        #         height=200,
+        #         key="clipboard_text",
+        #     )
+
+        #     if clipboard_text:
+        #         display_markdown_text(clipboard_text)
+        # with gquery._create_section_expander(
+        #     "Scratch Pad No.2 - Supports Markdown Formatting"
+        # ):
+        #     st.write(
+        #         "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
+        #     )
+        #     # Text area for user to paste the clipboard content
+        #     clipboard_text_02 = st.text_area(
+        #         ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
+        #         height=200,
+        #         key="clipboard_text_02",
+        #     )
+
+        #     if clipboard_text_02:
+        #         display_markdown_text(clipboard_text_02)
