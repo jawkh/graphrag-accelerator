@@ -18,6 +18,11 @@ st.session_state["initialized"] = True if initialized else False
 def graphrag_app(initialized: bool):
     # main entry point for app interface
     # st.title("MOH AIM - GraphRAG Copilot")
+    col1, col2 = st.columns([1, 1], vertical_alignment="bottom")
+    with col1:
+        st.markdown("## Welcome to ACE GraphRAG Copilot")
+    with col2:
+        st.image("./imgs/ACE_logo.png", width=200)
     (
         main_tab,
         prompt_gen_tab,

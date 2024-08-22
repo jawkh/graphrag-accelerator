@@ -27,7 +27,11 @@ def login():
     c1, c2 = st.columns([1, 2])
     with c1:
         with st.form("login_form"):
-            st.title("User Login")
+            col1, col2 = st.columns([1, 1], vertical_alignment="bottom")
+            with col1:
+                st.markdown("## User Login")
+            with col2:
+                st.image("./imgs/ACE_logo.png", width=200)
 
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
@@ -66,6 +70,12 @@ def login():
 
 # Logged Out Message
 def logout():
+    col1, col2 = st.columns([1, 1], vertical_alignment="bottom")
+    with col1:
+        st.markdown("## Bye Bye!")
+
+    with col2:
+        st.image("./imgs/ACE_logo.png", width=200)
     st.session_state.clear()
     st.success(
         "Logged out successfully! Either close the window or click the login button to login again."
@@ -92,6 +102,11 @@ def cb_change_password():
 
 
 def change_password():
+    col1, col2 = st.columns([1, 1], vertical_alignment="bottom")
+    with col1:
+        st.markdown("## Change Password")
+    with col2:
+        st.image("./imgs/ACE_logo.png", width=200)
     if "username" not in st.session_state:
         st.error("You must be logged in to change your password.")
         return
@@ -113,6 +128,11 @@ def change_password():
 
 
 def show_user_details():
+    col1, col2 = st.columns([1, 1], vertical_alignment="bottom")
+    with col1:
+        st.markdown("## User Details")
+    with col2:
+        st.image("./imgs/ACE_logo.png", width=200)
     user = get_user(st.session_state.username)
     user.id = "***"
     user.hashpassword = "***"
@@ -172,6 +192,11 @@ def cb_unlock_account(user):
 
 
 def admin_interface():
+    col1, col2 = st.columns([1, 1], vertical_alignment="bottom")
+    with col1:
+        st.markdown("## Users Administration")
+    with col2:
+        st.image("./imgs/ACE_logo.png", width=200)
     check_permission("Administrator")  # assert permission
 
     c1, c2 = st.columns([1, 2])
@@ -313,13 +338,19 @@ def check_permission(required_permission):
 
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
-    st.title("MOH ACE - GraphRAG Copilot")
-    loginPage = st.Page(login, title="User Login")
-    UsersAdminPage = st.Page(admin_interface, title="Users Administration")
+    # st.title("MOH ACE - GraphRAG Copilot")
+    loginPage = st.Page(login, title="User Login - MOH ACE GraphRAG Copilot")
+    UsersAdminPage = st.Page(
+        admin_interface, title="Users Administration - MOH ACE GraphRAG Copilot"
+    )
     mainPage = st.Page("app.py", title="MOH ACE GraphRAG Copilot")
-    show_user_detailsPage = st.Page(show_user_details, title="User Details")
-    changePasswordPage = st.Page(change_password, title="Change Password")
-    logoutPage = st.Page(logout, title="Logout")
+    show_user_detailsPage = st.Page(
+        show_user_details, title="User Details - MOH ACE GraphRAG Copilot"
+    )
+    changePasswordPage = st.Page(
+        change_password, title="Change Password - MOH ACE GraphRAG Copilot"
+    )
+    logoutPage = st.Page(logout, title="Logout - MOH ACE GraphRAG Copilot")
 
     if "username" not in st.session_state:
         pg = st.navigation([loginPage])
@@ -327,7 +358,7 @@ if __name__ == "__main__":
         "permissions" in st.session_state
         and "Administrator" in st.session_state["permissions"]
     ):
-        st.write(f"Welcome {st.session_state['username']}")
+        # st.write(f"Welcome {st.session_state['username']}")
         pg = st.navigation(
             {
                 "Copilot": [mainPage],
@@ -336,7 +367,7 @@ if __name__ == "__main__":
             }
         )
     else:
-        st.write(f"Welcome {st.session_state['username']}")
+        # st.write(f"Welcome {st.session_state['username']}")
         pg = st.navigation(
             {
                 "Copilot": [mainPage],
