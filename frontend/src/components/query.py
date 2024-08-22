@@ -28,13 +28,56 @@ class GraphQuery:
         return f"{self.session_id}_query_histories"
 
     def _save_query_context(self, new_message: dict) -> None:
+        """
+        Save the query context in the session state
+        """
         if "query_context" not in st.session_state:
             st.session_state["query_context"] = []
         # Append the new message to the session state
         st.session_state["query_context"].append(new_message)
-        # Save the query context asynchronously
+
+    def add_QnA_and_save_query_histories(self) -> None:
+        """
+        Add the QnA pair to the query context and save the query histories
+        """
+        if (
+            "query_context" not in st.session_state
+            or len(st.session_state["query_context"]) == 0
+        ):
+            return
+        numberOfQueries = len(st.session_state["query_context"])
+
+        """
+        Format of the base query context:
+            {
+                "datetime": user_query_time.strftime("%d-%b-%Y %H:%M:%S"),
+                "role": "user",
+                "content": user_query,
+                "query-type": "global",
+                "rag-indexes": search_index,
+            }
+        """
+        lastquery = st.session_state["query_context"][
+            numberOfQueries - 2
+        ]  # Get the last query
+        lastquerytime = lastquery["datetime"]  # Get the last query time
+        lastquerytype = lastquery["query-type"]  # Get the last query type
+        lastquerycontent = lastquery["content"]  # Get the last query content
+        lastqueryindexes = lastquery["rag-indexes"]  # Get the last query indexes
+
+        lastanswer = st.session_state["query_context"][
+            numberOfQueries - 1
+        ]  # Get the last answer
+        lastanswercontent = lastanswer["content"]  # Get the last answer content
+        # Save the query histories
         save_query_histories(
-            self._get_blob_filename(), st.session_state["query_context"]
+            self._get_blob_filename(),
+            st.session_state["query_context"],
+            lastquerytime,
+            lastquerycontent,
+            lastqueryindexes,
+            lastquerytype,
+            lastanswercontent,
         )
 
     def search(
@@ -150,7 +193,9 @@ class GraphQuery:
                         "rag-indexes": search_index,
                         "context": pformat(context_list),
                     }
-                )  # save query context
+                )
+                self.add_QnA_and_save_query_histories()  # save query history
+
                 with self._create_section_expander("Query Context"):
                     st.write(
                         self.format_md_text(
@@ -194,6 +239,9 @@ class GraphQuery:
                     "context": pformat(query_response["context_data"]["reports"]),
                 }
             )  # save query context
+
+            self.add_QnA_and_save_query_histories()  # save query history
+
             with self._create_section_expander("Query Response", "black", True, True):
                 st.write(query_response["result"])
             with self._create_section_expander("Query Context"):
@@ -248,6 +296,8 @@ class GraphQuery:
                 "relationship": pformat(relationships),
             }
         )  # save query context
+
+        self.add_QnA_and_save_query_histories()  # save query history
 
         if any(reports):
             with self._create_section_expander("Query Context"):

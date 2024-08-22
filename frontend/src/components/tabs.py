@@ -6,7 +6,7 @@ from time import sleep
 import pandas as pd
 import streamlit as st
 
-from src.auth.db import list_user_session_names_with_prefix, load_query_histories
+from src.auth.db import fetch_queryhistories_metadata, load_query_histories
 from src.components.index_pipeline import IndexPipeline
 from src.components.login_sidebar import login
 from src.components.md_formatter import display_markdown_text
@@ -35,19 +35,16 @@ def get_query_history_tab() -> None:
         # Load the chat histories for the current user
 
         try:
-            list_user_session_names = list_user_session_names_with_prefix(
+            list_queryhistories_metadata = fetch_queryhistories_metadata(
                 "query-history", st.session_state.session_id_prefix
             )
 
-            if not list_user_session_names:
+            if not list_queryhistories_metadata:
                 st.session_state.query_histories = []
                 st.write("No query histories available.")
                 return
             else:
-                list_user_session_names.append(
-                    f"{st.session_state.session_id}_query_histories"
-                )  # Append the current session to the list of sessions
-                st.session_state.query_histories = list_user_session_names
+                st.session_state.query_histories = list_queryhistories_metadata
         except Exception as e:
             st.error(f"Error loading blobs: {str(e)}")
             return
@@ -56,15 +53,43 @@ def get_query_history_tab() -> None:
         st.write("No query histories available.")
         return
 
-    selected_session = st.selectbox(
-        "Select a session:", st.session_state.query_histories
-    )  # Append the current session to the list of sessions
+    # selected_session = st.selectbox(
+    #     "Select a session:", st.session_state.query_histories
+    # )  # Append the current session to the list of sessions
+    """
+    df = pd.DataFrame(session_data)
+    event_select_query_history_row = st.dataframe(
+        df,
+        key="selected_query_history_row",
+        selection_mode="single-row",
+        on_select="rerun",
+    )
 
-    if selected_session:
-        session_data = load_query_histories(selected_session)
+     if len(event_select_query_history_row.selection.rows) > 0:
+            selectedRow = df.iloc[
+                event_select_query_history_row.selection.rows[0]
+            ].to_dict()
+    """
+    df_histories = pd.DataFrame(st.session_state.query_histories)
+    event_select_query_histories = st.dataframe(
+        df_histories,
+        key="select_query_histories",
+        selection_mode="single-row",
+        on_select="rerun",
+    )
+
+    # if selected_session:
+    #     session_data = load_query_histories(selected_session)
+    if len(event_select_query_histories.selection.rows) > 0:
+        selectedHistory = df_histories.iloc[
+            event_select_query_histories.selection.rows[0]
+        ].to_dict()
+
+        selectedName = selectedHistory["name"]
         with st.expander(
-            f":blue[**Query Histories for: {selected_session}**]", expanded=True
+            f"**blue:[Query Histories for: {selectedName}]**", expanded=True
         ):
+            session_data = load_query_histories(selectedName)
             df = pd.DataFrame(session_data)
             event_select_query_history_row = st.dataframe(
                 df,
@@ -78,7 +103,7 @@ def get_query_history_tab() -> None:
                 event_select_query_history_row.selection.rows[0]
             ].to_dict()
             if "content" in selectedRow.keys() and not pd.isna(selectedRow["content"]):
-                with st.expander(":blue[**Content**]"):
+                with st.expander(":blue[**Content**]", expanded=True):
                     display_markdown_text(selectedRow["content"])
 
             if "context" in selectedRow.keys() and not pd.isna(selectedRow["context"]):
@@ -445,34 +470,3 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
             ):
                 with st.expander(":blue[**Relationship**]"):
                     display_markdown_text(selectedRow["relationship"])
-
-        # with gquery._create_section_expander(
-        #     "Scratch Pad No.1 - Supports Markdown Formatting"
-        # ):
-        #     st.write(
-        #         "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
-        #     )
-        #     # Text area for user to paste the clipboard content
-        #     clipboard_text = st.text_area(
-        #         ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
-        #         height=200,
-        #         key="clipboard_text",
-        #     )
-
-        #     if clipboard_text:
-        #         display_markdown_text(clipboard_text)
-        # with gquery._create_section_expander(
-        #     "Scratch Pad No.2 - Supports Markdown Formatting"
-        # ):
-        #     st.write(
-        #         "Paste copied-text from your clipboard into the text area below for reading and taking notes. Supports Markdown formatting by pressing [Ctrl+Enter]."
-        #     )
-        #     # Text area for user to paste the clipboard content
-        #     clipboard_text_02 = st.text_area(
-        #         ":red[Paste here. Press [Ctrl+Enter] to render text in Markdown Format.]",
-        #         height=200,
-        #         key="clipboard_text_02",
-        #     )
-
-        #     if clipboard_text_02:
-        #         display_markdown_text(clipboard_text_02)

@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import json
+import re
 
 from azure.cosmos import (
     ContainerProxy,
@@ -10,7 +11,7 @@ from azure.cosmos import (
 )
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobClient, BlobServiceClient
+from azure.storage.blob import BlobServiceClient
 from environs import Env
 
 from .models import User
@@ -230,49 +231,108 @@ def list_graphrag_indexes():
     return [item["human_readable_name"] for item in items]
 
 
-def save_query_histories(blob_name: str, query_histories: list):
+def truncateText(inputText: str, length: int = 200):
+    # truncate the string to the maxlength
+    if str and length > 50 and len(inputText) > length:
+        return f"{inputText[:length]}..."
+    else:
+        return inputText
+
+
+def sanitize_metadata_value(value: str) -> str:
     """
-    Saves the query histories to Azure Blob Storage.
+    Sanitizes the metadata value to remove invalid characters.
 
     Args:
-        blob_name (str): The name of the blob file.
-        query_histories (list): The query histories data.
+        value (str): The metadata value to be sanitized.
+
+    Returns:
+        str: The sanitized metadata value.
     """
+    # Remove leading/trailing whitespace and newlines
+    sanitized_value = value.strip()
+
+    # Replace newline characters with spaces
+    sanitized_value = re.sub(r"\s+", " ", sanitized_value)
+
+    # Truncate the value if it's too long for metadata
+    max_length = (
+        1024  # Arbitrary length limit for metadata; Azure may have specific limits.
+    )
+    if len(sanitized_value) > max_length:
+        sanitized_value = sanitized_value[:max_length]
+
+    return sanitized_value
+
+
+def save_query_histories(
+    blob_name: str,
+    query_histories: list,
+    lastquerytime: str,
+    lastquerycontent: str,
+    lastqueryindexes: str,
+    lastqueryType: str,
+    lastanswercontent: str,
+):
+    """
+    Saves the query histories to Azure Blob Storage.
+    Args:
+        blob_name (str): The name of the blob in Azure Blob Storage.
+        query_histories (list): The list of query histories to be saved.
+        lastquerytime (str): The timestamp of the last query.
+        lastquerycontent (str): The content of the last query.
+        lastqueryindexes (str): The indexes of the last query.
+        lastqueryType (str): The type of the last query.
+        lastanswercontent (str): The content of the last answer.
+    """
+
     blob_service_client = BlobServiceClientSingleton.get_instance()
     blob_client = blob_service_client.get_blob_client(
         container="query-history", blob=blob_name
     )
-    blob_client.upload_blob(json.dumps(query_histories), overwrite=True)
+
+    # Save the last query and answer
+    metadata = {
+        "lastquerytime": str(lastquerytime),
+        "lastquerycontent": sanitize_metadata_value(truncateText(lastquerycontent)),
+        "lastqueryindexes": str(lastqueryindexes),
+        "lastqueryType": str(lastqueryType),
+        "lastanswercontent": sanitize_metadata_value(truncateText(lastanswercontent)),
+    }
+
+    blob_client.upload_blob(
+        json.dumps(query_histories), overwrite=True, metadata=metadata
+    )
 
 
-# Function to handle large data saving
-def save_large_query_histories(
-    blob_client: BlobClient, query_histories: list, max_blob_size=4 * 1024 * 1024
-):
-    """
-    Splits and saves large query histories data to multiple blobs if it exceeds the size limit.
+# # Function to handle large data saving
+# def save_large_query_histories(
+#     blob_client: BlobClient, query_histories: list, max_blob_size=4 * 1024 * 1024
+# ):
+#     """
+#     Splits and saves large query histories data to multiple blobs if it exceeds the size limit.
 
-    Args:
-        blob_client (BlobClient): The blob client to save the data.
-        query_histories (list): The query histories data to be saved.
-        max_blob_size (int): The maximum size of each blob in bytes.
-    """
-    chunk_index = 0
-    while query_histories:
-        chunk = []
-        current_size = 0
-        while (
-            query_histories
-            and current_size + len(json.dumps(query_histories[0])) <= max_blob_size
-        ):
-            item = query_histories.pop(0)
-            chunk.append(item)
-            current_size += len(json.dumps(item))
+#     Args:
+#         blob_client (BlobClient): The blob client to save the data.
+#         query_histories (list): The query histories data to be saved.
+#         max_blob_size (int): The maximum size of each blob in bytes.
+#     """
+#     chunk_index = 0
+#     while query_histories:
+#         chunk = []
+#         current_size = 0
+#         while (
+#             query_histories
+#             and current_size + len(json.dumps(query_histories[0])) <= max_blob_size
+#         ):
+#             item = query_histories.pop(0)
+#             chunk.append(item)
+#             current_size += len(json.dumps(item))
 
-        chunk_blob_name = f"{blob_client.blob_name}_chunk_{chunk_index}"
-        chunk_blob_client = blob_client.get_blob_client(chunk_blob_name)
-        chunk_blob_client.upload_blob(json.dumps(chunk), overwrite=True)
-        chunk_index += 1
+#         chunk_blob_name = f"{blob_client.blob_name}_chunk_{chunk_index}"
+#         chunk_blob_client = blob_client.get_blob_client(chunk_blob_name)
+#         chunk_blob_client.upload_blob(json.dumps(chunk), overwrite=True)
+#         chunk_index += 1
 
 
 def load_query_histories(blob_name: str) -> list:
@@ -293,28 +353,43 @@ def load_query_histories(blob_name: str) -> list:
     try:
         download_stream = blob_client.download_blob()
         query_context = json.loads(download_stream.readall())
+
         return query_context
     except Exception as e:
         print(f"Error loading query histories: {e}")
         return []
 
 
-def list_user_session_names_with_prefix(container_name: str, prefix: str):
+def fetch_queryhistories_metadata(container_name: str, prefix: str):
     """
-    List blobs with a specific prefix synchronously.
+    List blobs with a specific prefix synchronously and retrieve their metadata.
 
     Args:
         container_name (str): The name of the container.
         prefix (str): The prefix to filter blobs by. Eg. "userName__".
 
     Returns:
-        list: A list of User Session Names.
+        list[dict]: A list of dictionaries where each dictionary contains the blob name and its metadata.
     """
     blob_service_client = BlobServiceClientSingleton.get_instance()
     container_client = blob_service_client.get_container_client(container_name)
-    blob_list = []
+    blob_metadata_list = []
 
-    for blob in container_client.list_blobs(name_starts_with=prefix):
-        blob_list.append(blob.name)
+    # List blobs with their metadata in a single API call
+    blobs = container_client.list_blobs(name_starts_with=prefix, include=["metadata"])
 
-    return blob_list
+    for blob in blobs:
+        # Prepare the metadata dictionary
+        metadata_dict = {
+            "name": blob.name,
+            "lastquerytime": blob.metadata.get("lastquerytime"),
+            "lastquerycontent": blob.metadata.get("lastquerycontent"),
+            "lastqueryindexes": blob.metadata.get("lastqueryindexes"),
+            "lastqueryType": blob.metadata.get("lastqueryType"),
+            "lastanswercontent": blob.metadata.get("lastanswercontent"),
+        }
+
+        # Add the metadata dictionary to the list
+        blob_metadata_list.append(metadata_dict)
+
+    return blob_metadata_list
