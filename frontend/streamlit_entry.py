@@ -114,8 +114,6 @@ def change_password():
     c1, c2 = st.columns([1, 2])
     with c1:
         with st.form("change_password_form"):
-            st.title("Change My Password")
-
             st.text_input("Current Password", type="password", key="current_password")
             st.text_input("New Password", type="password", key="new_password")
             st.text_input(
@@ -201,7 +199,6 @@ def admin_interface():
 
     c1, c2 = st.columns([1, 2])
     with c1:
-        st.title("User Administration")
         action = st.selectbox(
             "Select Action",
             [
@@ -339,18 +336,12 @@ def check_permission(required_permission):
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
     # st.title("MOH ACE - GraphRAG Copilot")
-    loginPage = st.Page(login, title="User Login - MOH ACE GraphRAG Copilot")
-    UsersAdminPage = st.Page(
-        admin_interface, title="Users Administration - MOH ACE GraphRAG Copilot"
-    )
+    loginPage = st.Page(login, title="User Login")
+    UsersAdminPage = st.Page(admin_interface, title="Users Administration")
     mainPage = st.Page("app.py", title="MOH ACE GraphRAG Copilot")
-    show_user_detailsPage = st.Page(
-        show_user_details, title="User Details - MOH ACE GraphRAG Copilot"
-    )
-    changePasswordPage = st.Page(
-        change_password, title="Change Password - MOH ACE GraphRAG Copilot"
-    )
-    logoutPage = st.Page(logout, title="Logout - MOH ACE GraphRAG Copilot")
+    show_user_detailsPage = st.Page(show_user_details, title="User Details")
+    changePasswordPage = st.Page(change_password, title="Change Password")
+    logoutPage = st.Page(logout, title="Logout")
 
     if "username" not in st.session_state:
         pg = st.navigation([loginPage])

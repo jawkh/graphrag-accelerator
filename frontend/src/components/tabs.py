@@ -24,12 +24,12 @@ from src.graphrag_api import GraphragAPI
 
 def get_query_history_tab() -> None:
     """
-    Displays the chat history for the current user.
+    Displays the Session histories for the current user.
 
     Returns:
         None
     """
-    st.title("Past Query Histories")
+    st.title("Past Session Histories")
 
     if "query_histories" not in st.session_state:
         # Load the chat histories for the current user
@@ -41,7 +41,7 @@ def get_query_history_tab() -> None:
 
             if not list_queryhistories_metadata:
                 st.session_state.query_histories = []
-                st.write("No query histories available.")
+                st.write("No session histories available.")
                 return
             else:
                 st.session_state.query_histories = list_queryhistories_metadata
@@ -50,32 +50,36 @@ def get_query_history_tab() -> None:
             return
 
     if not st.session_state.query_histories:
-        st.write("No query histories available.")
+        st.write("No session histories available.")
         return
 
-    # selected_session = st.selectbox(
-    #     "Select a session:", st.session_state.query_histories
-    # )  # Append the current session to the list of sessions
-    """
-    df = pd.DataFrame(session_data)
-    event_select_query_history_row = st.dataframe(
-        df,
-        key="selected_query_history_row",
-        selection_mode="single-row",
-        on_select="rerun",
-    )
-
-     if len(event_select_query_history_row.selection.rows) > 0:
-            selectedRow = df.iloc[
-                event_select_query_history_row.selection.rows[0]
-            ].to_dict()
-    """
     df_histories = pd.DataFrame(st.session_state.query_histories)
+    st.markdown(
+        "__Click on first column of the row (each representing a past session) to view all the completed queries of that session.__"
+    )
     event_select_query_histories = st.dataframe(
         df_histories,
         key="select_query_histories",
         selection_mode="single-row",
         on_select="rerun",
+        column_config={
+            "name": st.column_config.Column(width="small"),
+            "lastquerytime": st.column_config.DatetimeColumn(
+                "Last Queried At", format="YYYY-MM-DD HH:mm:ss"
+            ),
+            "lastquerycontent": st.column_config.Column("Last Query"),
+            "lastanswercontent": st.column_config.Column("Answer"),
+            "lastqueryType": st.column_config.Column("Query Type"),
+            "lastqueryindexes": st.column_config.Column("Indexes"),
+        },
+        column_order=[
+            "lastquerytime",
+            "lastquerycontent",
+            "lastanswercontent",
+            "lastqueryType",
+            "lastqueryindexes",
+            "name",
+        ],
     )
 
     # if selected_session:
@@ -86,11 +90,10 @@ def get_query_history_tab() -> None:
         ].to_dict()
 
         selectedName = selectedHistory["name"]
-        with st.expander(
-            f"**blue:[Query Histories for: {selectedName}]**", expanded=True
-        ):
+        with st.expander(":blue[**Completed Queries**]", expanded=True):
             session_data = load_query_histories(selectedName)
             df = pd.DataFrame(session_data)
+            st.markdown("__Click on first column of the row to view the details.__")
             event_select_query_history_row = st.dataframe(
                 df,
                 key="selected_query_history_row",
@@ -134,7 +137,6 @@ def get_main_tab(initialized: bool) -> None:
 
     url = "https://www.microsoft.com/en-us/research/blog/graphrag-unlocking-llm-discovery-on-narrative-private-data/"
     content = f"""
-    ##  Welcome to GraphRAG!
     Diving into complex information and uncovering semantic relationships utilizing generative AI has never been easier.
     Here's how you can get started with just a few clicks:
     - **PROMPT GENERATION:** (*Optional Step*)
@@ -428,16 +430,9 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
         "query_context" in st.session_state
         and len(st.session_state["query_context"]) > 0
     ):
-        with gquery._create_section_expander(
-            f"Query History: [SESSION_ID: {st.session_state['session_id']}]"
-        ):
-            # st.write(
-            #     gquery.format_md_text(
-            #         "Double-click on content to expand text", "red", False
-            #     )
-            # )
-            # gquery._build_st_dataframe(st.session_state["query_context"])
+        with gquery._create_section_expander("Completed Queries:", expanded=True):
             df = pd.DataFrame(st.session_state["query_context"])
+            st.markdown("__Click on first column of the row to view the details.__")
             event_select_query_row = st.dataframe(
                 df,
                 key="event_select_query_row",
@@ -448,7 +443,7 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
         if len(event_select_query_row.selection.rows) > 0:
             selectedRow = df.iloc[event_select_query_row.selection.rows[0]].to_dict()
             if "content" in selectedRow.keys() and not pd.isna(selectedRow["content"]):
-                with st.expander(":blue[**Content**]"):
+                with st.expander(":blue[**Content**]", expanded=True):
                     display_markdown_text(selectedRow["content"])
 
             if "context" in selectedRow.keys() and not pd.isna(selectedRow["context"]):
