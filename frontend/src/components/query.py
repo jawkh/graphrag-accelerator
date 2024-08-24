@@ -109,6 +109,18 @@ class GraphQuery:
         ]
 
         message = np.random.choice(idler_message_list)
+
+        system_prompt = """\nInstructions:
+                            1. **Understand the Question**: Carefully read the request to ensure a clear understanding of the required information.
+                            2. **Structure Your Response**: Provide a detailed analysis of the request, ensuring to cover each aspect comprehensively.
+                            3. **Use Clear Reasoning**: Explain your reasoning process within `<thoughts></thoughts>` tags to help outline the steps taken to reach each part of your response. This will help in understanding how you arrived at your conclusions and enhance the transparency of your thought process.
+                            4. **Provide a Comprehensive Answer**: Ensure the answer is complete and addresses each part of the request. Be thorough and holistic in your explanation.
+                        """
+
+        query = (
+            query + system_prompt
+        )  # Inject System Prompt by appending to the User's Prompt.
+
         with st.spinner(text=message):
             try:
                 match query_type:
