@@ -255,6 +255,9 @@ def sanitize_metadata_value(value: str) -> str:
     # Replace newline characters with spaces
     sanitized_value = re.sub(r"\s+", " ", sanitized_value)
 
+    # Remove non-ASCII characters (metadata only accepts ascii characters)
+    sanitized_value = sanitized_value.encode("ascii", "ignore").decode()
+
     # Truncate the value if it's too long for metadata
     max_length = (
         1024  # Arbitrary length limit for metadata; Azure may have specific limits.

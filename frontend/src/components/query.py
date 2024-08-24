@@ -10,6 +10,7 @@ import pandas as pd
 import requests
 import streamlit as st
 
+from src.components.md_formatter import display_markdown_text
 from src.graphrag_api import GraphragAPI
 
 from ..auth.db import save_query_histories
@@ -243,7 +244,7 @@ class GraphQuery:
             self.add_QnA_and_save_query_histories()  # save query history
 
             with self._create_section_expander("Query Response", "black", True, True):
-                st.write(query_response["result"])
+                st.write(display_markdown_text(query_response["result"]))
             with self._create_section_expander("Query Context"):
                 st.write(
                     self.format_md_text(
@@ -277,7 +278,7 @@ class GraphQuery:
             )  # save query context
 
             with self._create_section_expander("Query Response", "black", True, True):
-                st.write(results)
+                st.write(display_markdown_text(results))
 
         context_data = query_response["context_data"]
         reports = context_data["reports"]

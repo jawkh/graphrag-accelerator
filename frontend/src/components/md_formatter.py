@@ -4,17 +4,36 @@ import streamlit as st
 
 
 def display_markdown_text(text: str):
-    if is_valid_list_of_dicts(text):
-        display_pythonListDict_as_markdown(ast.literal_eval(text))
-    else:
-        st.markdown(text)
+    """
+    Display markdown text.
+
+    This function will be able to perform special handling if the text is a Python Dictionary
+
+    Parameters:
+    text (str): The markdown text to be displayed.
+
+    Returns:
+    None
+    """
+    try:
+        # Attempt to parse the string using ast.literal_eval()
+        parsed = ast.literal_eval(text)
+
+        # Check if the result is a list of dictionaries
+        if isinstance(parsed, list) and all(isinstance(item, dict) for item in parsed):
+            display_pythonListDict_as_markdown(parsed)
+        else:
+            st.markdown(escape_special_chars(text))
+    except (ValueError, SyntaxError):
+        # If there was an error parsing the string, it's not a valid List[Dict]
+        st.markdown(escape_special_chars(text))
 
 
 def display_pythonListDict_as_markdown(listDict):
     for item in listDict:
         # Process common fields that might exist in all dictionary types
         if "title" in item:
-            st.markdown(f"### {item['title']}")
+            st.markdown(f"### {escape_special_chars(item['title'])}")
 
         if "entity" in item:
             st.markdown(f"**Entity:** {item['entity']}")
@@ -52,10 +71,10 @@ def display_pythonListDict_as_markdown(listDict):
             st.markdown(f"**Links:** {item['links']}")
 
         if "content" in item:
-            st.markdown(item["content"])
+            st.markdown(escape_special_chars(item["content"]))
 
         if "description" in item:
-            st.markdown(item["description"])
+            st.markdown(escape_special_chars(item["description"]))
 
         # Add a horizontal line to separate different entries, only if any field was displayed
         if any(
@@ -79,16 +98,21 @@ def display_pythonListDict_as_markdown(listDict):
             st.markdown("---")
 
 
-def is_valid_list_of_dicts(string):
-    try:
-        # Attempt to parse the string using ast.literal_eval()
-        parsed = ast.literal_eval(string)
+def escape_special_chars(text: str, chars_to_escape=["$"]) -> str:
+    """
+    Escapes special characters in the text for proper Markdown rendering in Streamlit.
 
-        # Check if the result is a list of dictionaries
-        if isinstance(parsed, list) and all(isinstance(item, dict) for item in parsed):
-            return True
-        else:
-            return False
-    except (ValueError, SyntaxError):
-        # If there was an error parsing the string, it's not a valid List[Dict]
-        return False
+    Args:
+        text (str): The input text to be processed.
+        chars_to_escape (list, optional): A list of characters to escape. Defaults to ['$'].
+
+    Returns:
+        str: The processed text with special characters escaped.
+    """
+    if chars_to_escape is None:
+        chars_to_escape = ["$"]
+
+    for char in chars_to_escape:
+        text = text.replace(char, f"\\{char}")
+
+    return text
