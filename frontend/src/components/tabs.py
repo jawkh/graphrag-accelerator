@@ -351,7 +351,7 @@ def get_query_tab(client: GraphragAPI, allowed_index) -> None:
                 "Query Type",
                 ["Global Streaming", "Global", "Local"],
                 key="select-query-type",
-                help="Select the query type - Each yields different results of specificity. Global queries focus on the entire graph structure. Local queries focus on a set of communities (subgraphs) in the graph that are more connected to each other than they are to the rest of the graph structure and can focus on very specific entities in the graph. Global streaming is a global query that displays results as they appear live.",
+                help="Select the query type - Each yields different results of specificity. Global streaming is a global query that displays results as they appear live. Global queries focus on aggregating information across the entire dataset, making them ideal for answering broader, more complex questions that require an understanding of larger patterns or themes in the data. Local queries focus on retrieving specific information based on close relationships within the knowledge graph, suitable for narrow, well-defined questions.",
             )
         with col2:
             search_indexes = client.get_index_names()
